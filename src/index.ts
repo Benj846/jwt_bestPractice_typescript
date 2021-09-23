@@ -1,6 +1,6 @@
 import "reflect-metadata";
 import "dotenv/config";
-
+import cookieParser from "cookie-parser";
 import express from "express";
 import { ApolloServer } from "apollo-server-express";
 import { buildSchema } from "type-graphql";
@@ -9,7 +9,7 @@ import { User } from "./entity/User";
 import { createConnection } from "typeorm";
 import { ApolloServerPluginLandingPageGraphQLPlayground } from "apollo-server-core";
 import { verify } from "jsonwebtoken";
-import { createAccessToken } from "./auth";
+import { createAccessToken, createRefreshToken } from "./auth";
 // createConnection().then(async connection => {
 
 //     console.log("Inserting a new user into the database...");
@@ -30,10 +30,10 @@ import { createAccessToken } from "./auth";
 
 (async () => {
   const app = express();
+  app.use(cookieParser());
   app.get("/", (_req, res) => res.send("say hello"));
   app.post("/refresh_token", async (req, res) => {
     const token = req.cookies.jid;
-    console.log(token);
     if (!token) {
       return res.send({ ok: false, accessToken: "" });
     }
@@ -50,6 +50,11 @@ import { createAccessToken } from "./auth";
     if (!user) {
       return res.send({ ok: false, accessToken: "" });
     }
+    res.cookie("jid", createRefreshToken(user), {
+      httpOnly: true,
+      sameSite: "none",
+      secure: true,
+    });
     return res.send({ ok: true, accessToken: createAccessToken(user) });
   });
 
