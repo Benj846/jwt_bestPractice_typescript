@@ -10,6 +10,7 @@ import { createConnection } from "typeorm";
 import { ApolloServerPluginLandingPageGraphQLPlayground } from "apollo-server-core";
 import { verify } from "jsonwebtoken";
 import { createAccessToken, createRefreshToken } from "./auth";
+import {sendRefreshToken} from './sendRefreshToken'
 // createConnection().then(async connection => {
 
 //     console.log("Inserting a new user into the database...");
@@ -50,11 +51,10 @@ import { createAccessToken, createRefreshToken } from "./auth";
     if (!user) {
       return res.send({ ok: false, accessToken: "" });
     }
-    res.cookie("jid", createRefreshToken(user), {
-      httpOnly: true,
-      sameSite: "none",
-      secure: true,
-    });
+    if(user.tokenVersion!== payload.tokenVersion){
+      return res.send({ok:false, accessToken:''})
+    }
+    sendRefreshToken(res,createRefreshToken(user))
     return res.send({ ok: true, accessToken: createAccessToken(user) });
   });
 
