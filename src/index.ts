@@ -7,6 +7,7 @@ import { buildSchema } from "type-graphql";
 import UserResolver from "./UserResolver";
 import { User } from "./entity/User";
 import { createConnection } from "typeorm";
+import cors from 'cors'
 import { ApolloServerPluginLandingPageGraphQLPlayground } from "apollo-server-core";
 import { verify } from "jsonwebtoken";
 import { createAccessToken, createRefreshToken } from "./auth";
@@ -31,6 +32,11 @@ import {sendRefreshToken} from './sendRefreshToken'
 
 (async () => {
   const app = express();
+  // setup cors manually
+  app.use(cors({
+    origin:'http://localhost:3000',
+    credentials:true
+  }));
   app.use(cookieParser());
   app.get("/", (_req, res) => res.send("say hello"));
   app.post("/refresh_token", async (req, res) => {
@@ -69,7 +75,8 @@ import {sendRefreshToken} from './sendRefreshToken'
   await apolloServer.start();
   apolloServer.applyMiddleware({
     app,
-    cors: { credentials: true },
+    //disable cors that's default in apolloServer
+    cors: false,
     // cors: { credentials: true, origin: "http://localhost:4000" },
   });
   app.listen(4000, () => {
